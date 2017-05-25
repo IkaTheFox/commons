@@ -5,7 +5,7 @@ session_start();
  * @param type : 'success' | 'info' | 'warning' | 'danger'
  * @param message : message to display
  */
-function notify($type,$message){
+function notify($type = "info",$message){
     print('
     
     <div class="alert alert-'. $type .' fade in">'
@@ -40,12 +40,14 @@ function signedin()
                         <li class="dropdown" ><a href="#" class="dropdown-toggle" data-toggle = "dropdown" > Inventory <b
                                         class="caret" ></b ></a >
                             <ul class="dropdown-menu" >
-                                <li class="dropdown-header" > Worn Items </li >
-                                <li > Ragged top </li >
+                                <li class="dropdown-header" > Equipped Items </li >');
+
+                               /* <li > Ragged top </li >
                                 <li > Ragged throusers </li >
                                 <li class="divider" ></li >
                                 <li class="dropdown-header" > Pocket</li >
-                                <li > Nothing</li >
+                                <li > Nothing</li >*/
+    print('
                             </ul >
                         </li >
                     </ul >
@@ -55,7 +57,7 @@ function signedin()
         </div >');
     }
 
-    function unsigned()
+function unsigned()
     { print('
         <div class="navbar navbar-default navbar-fixed-top unlogged" role="navigation" >
             <div class="container" >
@@ -199,10 +201,10 @@ if (isset($_SESSION["user"])) {
         require_once('db.php');
         $username = $_POST["pseudo"];
         $password = $_POST["password"];
-
-        if (validate_user($username, $password)) {
-
+        $ID = validate_user($username, $password);
+        if ($ID > 0) {
             $_SESSION["user"] = $username;
+            $_SESSION["ID"] = $ID;
             signedin();
             notify('success',"Welcome " . $username);
         } else {
@@ -249,7 +251,7 @@ if (isset($_SESSION["user"])) {
 
                 $.post("http://localhost/Project/register.php", JSON.stringify(jsonData),
                     function (data, status) {
-                        alert(data);
+                        //alert(data);
                         var jsonData = JSON.parse(data);
                         if(jsonData.status === "valid")
                         {

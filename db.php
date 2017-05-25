@@ -7,33 +7,52 @@ function connect()
 function validate_user($username, $password)
 {
     try{
-        $sqlCommand = "SELECT * FROM customers WHERE NICK = '$username'";
+        $sqlCommand = "SELECT * FROM customers WHERE NICK = :username";
 
         $db = connect();
-        foreach ($db->query($sqlCommand) as $row)
+        $input = $db->prepare($sqlCommand);
+        $input->bindParam(':username',$username);
+        $input->execute();
+        $result = $input->fetchAll();
+        foreach ($result as $row)
         {
-            if($row["Password"] == $password)
+            $crypted = crypt($password,$row["Salt"]);
+            $salt =  $row["Salt"];
+
+            if($crypted === $row["Password"])
             {
-                return true;
+                return $row["ID"];
             }
         }
     }catch(PDOException $ex){
-        return false;
+        return -1;
     }
 
-    return false;
+    return -1;
 }
 
 function new_user($username,$password,$email){
     try{
-        $sqlCommand = "INSERT INTO `customers`(`Nick`, `Password`, `Email`) VALUES ('$username','$password','$email')";
+        require_once('mail.php');
+        $sqlCommand = "INSERT INTO `customers`(`Nick`, `Password`,`Salt`, `Email`) VALUES (:username,:password,:salt,:email)";
         $db = connect();
+
+        $salt = substr(str_shuffle(MD5(microtime())), 0, 10);
+
+        $crypted = crypt($password,$salt);
+
         $input = $db->prepare($sqlCommand);
+        $input->bindParam(':username',$username);
+        $input->bindParam(':password',$crypted);
+        $input->bindParam(':salt',$salt);
+        $input->bindParam(':email',$email);
+
         $input->execute();
         $result = $input->fetchAll();
 
 
         if($result === false ) return false;
+        send_email($email,"Welcome to Project.php!","Hello, I'm Ika, and welcome to Project.php. Thank you so much for signing up, I hope you'll enjoy!");
         return true;
     }catch(PDOException $ex){
         return false;
@@ -46,10 +65,13 @@ function query_database($SQLCommand)
     return $db->query($SQLCommand);
 }
 
+
 function insert_item($Name,$Type,$Power,$Description)
 {
     $Command = "INSERT INTO item VALUES('$Name','$Type','$Power','$Description')";
-    execute_command($Command);
+    $db = connect();
+    $input = $db->prepare($Command);
+    $input->execute();
     return;
 }
 
