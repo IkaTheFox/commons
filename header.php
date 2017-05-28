@@ -1,3 +1,25 @@
+<!DOCTYPE html>
+<header>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <script src="https://use.fontawesome.com/767fac0b09.js"></script>
+    <title>Testing...</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+</header>
+<body>
 <?php
 session_start();
 /*
@@ -13,8 +35,22 @@ function notify($type = "info",$message){
 '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a></div>');
 }
 
-function signedin()
-    {print('
+function signedin($ID)
+    {
+        require_once ('Inventory.php');
+        $inventory = new Inventory($ID);
+        $equipped = Array();
+        $pocket = Array();
+
+        for($i = 0; $i < $inventory->count() ; $i++){
+            $item = $inventory->getitem($i);
+            if($item[4]){
+                array_push($equipped,$item);
+            }else{
+                array_push($pocket,$item);
+            }
+        }
+        print('
         <div class="navbar navbar-default navbar-fixed-top" role = "navigation" >
             <div class="container" >
                 <div class="navbar-header" >
@@ -24,36 +60,59 @@ function signedin()
                         <span class="icon-bar" ></span >
                         <span class="icon-bar" ></span >
                     </button >
-                    <a class="navbar-brand" href = "../Project/index.html" > Project . php</a >
+                    <a class="navbar-brand" href = "../Project/index.php" > Project . php</a >
                 </div >
                 <div class="navbar-collapse collapse" >
                     <ul class="nav navbar-nav navbar-left" >
-                        <li ><a href = "../Project/about.html" > About</a ></li >
+                        <li ><a href = "../Project/about.php" > About</a ></li >
                     </ul >
                     <ul class="nav navbar-nav navbar-right" >
-                        <li><form class="signout" role="form" action="'. $_SERVER['PHP_SELF'] . '" method="POST">
-                            <input type="hidden" name="signout" id="signout" value="signout">
-                            <button type="submit" class="btn">Sign out</button>
-                        </form></li>
+                        
                         <li ><a href = "#save" > Save</a ></li >
                         <li ><a href = "#load" > Load</a ></li >
                         <li class="dropdown" ><a href="#" class="dropdown-toggle" data-toggle = "dropdown" > Inventory <b
                                         class="caret" ></b ></a >
                             <ul class="dropdown-menu" >
                                 <li class="dropdown-header" > Equipped Items </li >');
+        if(count($equipped) === 0){
+            print("<li > Nothing</li >");
+        }else {
+            foreach ($equipped as $x) {
+                if ($x['itemPower'] !== null) {
+                    print('<li data-toggle="tooltip" title="'.$x["itemDescription"].'">' . $x["itemName"] . ' - Power :' . $x['itemPower'] . '  </li >');
+                } else {
+                    print("<li data-toggle=\"tooltip\" title=\"".$x["itemDescription"]."\"> " . $x['itemName'] . "</li>");
+                }
+            }
+        }
+                               print('<li class="divider" ></li >
+                                <li class="dropdown-header" > Pocket</li >');
 
-                               /* <li > Ragged top </li >
-                                <li > Ragged throusers </li >
-                                <li class="divider" ></li >
-                                <li class="dropdown-header" > Pocket</li >
-                                <li > Nothing</li >*/
+        if(count($pocket) === 0){
+            print("<li > Nothing</li >");
+        }else {
+            foreach ($pocket as $x) {
+                if ($x['itemPower'] !== null) {
+                    print('<li data-toggle="tooltip" title="'.$x["itemDescription"].'">' . $x["itemName"] . ' - Power :' . $x['itemPower'] . '  </li >');
+                } else {
+                    print("<li data-toggle=\"tooltip\" title=\"".$x["itemDescription"]."\"> " . $x['itemName'] . "</li>");
+                }
+            }
+        }
+                               /*<a href="#" data-toggle="tooltip" title=""></a>
+                                *
+                                *  <li > Nothing</li >*/
     print('
                             </ul >
-                        </li >
-                    </ul >
+                            </li >
+                            <li><form class="signout" role="form" action="'. $_SERVER['PHP_SELF'] . '" method="POST">
+                            <input type="hidden" name="signout" id="signout" value="signout">
+                            <button type="submit" class="btn btn-secundary">Sign out</button>
+                        </form></li>
+                        </ul >
+                    </div >
                 </div >
             </div >
-        </div >
         </div >');
     }
 
@@ -72,7 +131,7 @@ function unsigned()
                 </div >
                 <div class="navbar-collapse collapse" >
                     <ul class="nav navbar-nav navbar-left" >
-                        <li ><a href="../Project/about.html" > About</a ></li >
+                        <li ><a href="../Project/about.php" > About</a ></li >
                     </ul >
                     <ul class="nav navbar-nav navbar-right" >
                         <li class="active" ><a href="#signup" data-toggle = "modal" > Sign up </a ></li >
@@ -186,14 +245,14 @@ function unsigned()
 
 //Actual beginning of the page
 
-if (isset($_SESSION["user"])) {
+if (isset($_SESSION["user"]) && isset($_SESSION["ID"])) {
     if(isset($_POST["signout"])){
         session_destroy();
         session_start();
         unsigned();
         notify('success','Successfully signed out !');
     }else {
-        signedin();
+        signedin($_SESSION["ID"]);
     }
 }else {
 //Extract username and password
@@ -205,7 +264,7 @@ if (isset($_SESSION["user"])) {
         if ($ID > 0) {
             $_SESSION["user"] = $username;
             $_SESSION["ID"] = $ID;
-            signedin();
+            signedin($ID);
             notify('success',"Welcome " . $username);
         } else {
             unsigned();
